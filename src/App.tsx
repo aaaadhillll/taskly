@@ -39,12 +39,12 @@ function Page({ route }: { route: Route }) {
 }
 
 function Screens() {
-  const hashRoute = useRoute()
+  const rawRoute = useRoute()
   const { tasks } = useTasks()
   const { reminders, welcomed } = useSettings()
   const { allCategories } = useCategories()
   // First visit: the welcome screen stands in for Home until "Get Started"
-  const route: Route = !welcomed && hashRoute.name === "home" ? { name: "welcome" } : hashRoute
+  const route: Route = !welcomed && rawRoute.name === "home" ? { name: "welcome" } : rawRoute
   useReminders(reminders, tasks)
 
   // The tab title names the screen, so history and screen readers can tell them apart

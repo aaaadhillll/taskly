@@ -1,4 +1,5 @@
 import { useSettings } from "@/hooks/useSettings"
+import { links } from "@/hooks/useRoute"
 import { formatDate, greeting, todayKey } from "@/utils/date"
 
 /**
@@ -27,7 +28,7 @@ export function Avatar({ className }: { className?: string }) {
   const { name } = useSettings()
   return (
     <a
-      href="#/settings"
+      href={links.settings}
       aria-label="Profile and settings"
       className={`grid size-11 shrink-0 place-items-center rounded-full bg-accent text-lg font-extrabold text-accent-ink ${className ?? ""}`}
     >

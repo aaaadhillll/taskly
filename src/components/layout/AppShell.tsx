@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react"
-import type { Route } from "@/hooks/useRoute"
+import { links, navigate, type Route } from "@/hooks/useRoute"
 import { useUi } from "@/hooks/useUi"
 import { DeleteTaskDialog } from "@/components/tasks/DeleteTaskDialog"
 import { TaskFormDialog } from "@/components/tasks/TaskFormDialog"
@@ -29,7 +29,7 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
         openForm({ dueDate: selectedDate })
       } else if (event.key === "/") {
         event.preventDefault()
-        if (route.name !== "home") location.hash = "#/"
+        if (route.name !== "home") navigate(links.home)
         setSearchOpen(true)
         // The field mounts on the next paint when it was closed
         requestAnimationFrame(() => document.getElementById("task-search")?.focus())
