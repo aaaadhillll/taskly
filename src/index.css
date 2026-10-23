@@ -1,0 +1,241 @@
+@import "tailwindcss";
+
+/*
+  Taskly design tokens. Every colour is a light-dark() pair, so one set of utilities serves both
+  themes; data-theme on <html> (set before first paint) picks the side. The accent fill is the same
+  greenish-yellow (lime) in both themes, and always carries ink text: as text or a thin stroke on
+  white it is too low-contrast, so --color-accent-text is a deep olive in light mode instead.
+  Contrast is checked in the test run, not assumed.
+*/
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* Light mode: pure white page and cards alike — they separate by shadow (--shadow-card), not by
+     a tinted canvas. Dark mode: warm ink — unchanged. */
+  --color-canvas: light-dark(#ffffff, #0b0c0b);
+  --color-surface: light-dark(#ffffff, #181918);
+  --color-elevated: light-dark(#e5e4de, #202120);
+  --color-text: light-dark(#1a1916, #f5f5ef);
+  --color-muted: light-dark(#6b6964, #9a9d96);
+  --color-line: light-dark(rgb(26 25 22 / 0.11), rgb(245 245 239 / 0.1));
+  --color-line-strong: light-dark(rgb(26 25 22 / 0.22), rgb(245 245 239 / 0.24));
+
+  /* Buttons: white with a visible edge in light mode, a raised dark chip in dark mode */
+  --color-btn: light-dark(#ffffff, #202120);
+  --color-btn-hover: light-dark(#eceae4, #2b2c2b);
+  --color-edge: light-dark(rgb(26 25 22 / 0.15), rgb(245 245 239 / 0.07));
+  /* The accent fill needs a hairline on a light page or its edge disappears against white */
+  --color-accent-edge: light-dark(rgb(26 25 22 / 0.28), transparent);
+
+  /* Same greenish-yellow in both themes — a fill that always carries ink text */
+  --color-accent: #d7ff3f;
+  --color-accent-ink: #0b0c0b;
+  /* Darker olive — legible on a white canvas, ~9:1 */
+  --color-accent-text: light-dark(#3e5500, #d7ff3f);
+
+  /* Text on the ink-coloured button in light mode. Dark mode has no cream surface at all. */
+  --color-cream: #f5f3ee;
+
+  --color-danger: #ff5b5b;
+  --color-warning: #ffb547;
+  --color-danger-text: light-dark(#c0251f, #ff5b5b);
+  --color-warning-text: light-dark(#7a4c00, #ffb547);
+  --color-ring: light-dark(#1a1916, #d7ff3f);
+  /* The tick on a finished task: warm dark on a light page, lime on a dark one. */
+  --color-check: light-dark(#1a1916, #d7ff3f);
+  --color-on-check: light-dark(#f5f3ee, #0b0c0b);
+  /* The selected pill, and the main button on a card: warm dark on light, lime on dark */
+  --color-solid: light-dark(#1a1916, #d7ff3f);
+  --color-on-solid: light-dark(#f5f3ee, #0b0c0b);
+  /* Bars in a chart that aren't the current period */
+  --color-bar: light-dark(rgb(26 25 22 / 0.26), rgb(215 255 63 / 0.42));
+
+  /* Phone sizes follow the compact reference; the editorial scale opens up from tablet width */
+  --text-display: clamp(2rem, 0.9rem + 4.6vw, 4.5rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.045em;
+  --text-display--font-weight: 800;
+  /* Page titles: 26px on a phone, 72px on a wide desktop */
+  --text-page: clamp(1.5rem, 0.556rem + 4.38vw, 4.5rem);
+  --text-page--line-height: 1.05;
+  --text-page--letter-spacing: -0.04em;
+  --text-page--font-weight: 800;
+  --text-h1: clamp(1.5rem, 1rem + 2.3vw, 3rem);
+  --text-h1--line-height: 1.05;
+  --text-h1--letter-spacing: -0.04em;
+  --text-h1--font-weight: 800;
+  --text-feature: clamp(1.625rem, 1.1rem + 2vw, 2.75rem);
+  --text-feature--line-height: 1.05;
+  --text-feature--letter-spacing: -0.04em;
+  --text-feature--font-weight: 800;
+  --text-task: clamp(1.0625rem, 0.95rem + 0.5vw, 1.5rem);
+  --text-task--line-height: 1.15;
+  --text-task--letter-spacing: -0.025em;
+  --text-task--font-weight: 700;
+
+  --animate-rise: rise 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-modal: modal-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Cards and buttons lift off a light page with a soft shadow; on dark, colour alone separates them.
+   Canvas and card are the same white in light mode, so the shadow carries all the separation.
+   Built as stacked layers that each roughly double the previous blur/offset while opacity decays
+   (the "smooth shadow" technique: https://www.joshwcomeau.com/css/designing-shadows/) — a real
+   shadow is many overlapping soft light sources, not one ring, so one hard-edged layer reads as a
+   line; several soft ones blended together read as a natural, continuous fade. Kept to a "medium"
+   size (max ~13px blur) on purpose: a bigger one (tried first) bled past small components like the
+   date strip's overflow-x-auto row and got hard-clipped at its edge — the opposite of feathered. */
+:root {
+  --shadow-card:
+    0.3px 0.6px 0.8px rgb(26 25 22 / 0.05),
+    0.9px 1.8px 2.3px -0.6px rgb(26 25 22 / 0.06),
+    2.4px 4.9px 6.2px -1.3px rgb(26 25 22 / 0.07),
+    5.6px 11.3px 14.3px -1.9px rgb(26 25 22 / 0.08);
+  --shadow-sm:
+    0.2px 0.4px 0.5px rgb(26 25 22 / 0.05),
+    0.6px 1.3px 1.6px -0.6px rgb(26 25 22 / 0.06),
+    1.6px 3.2px 4px -1.3px rgb(26 25 22 / 0.07);
+}
+
+:root[data-theme="dark"] {
+  --shadow-card: none;
+  --shadow-sm: none;
+}
+
+/* Lime cards re-point the tokens their contents use, so text-text, text-muted and the ring stay readable on lime. */
+[data-surface="accent"] {
+  --color-text: var(--color-accent-ink);
+  --color-muted: rgb(11 12 11 / 0.72);
+  --color-line: rgb(11 12 11 / 0.2);
+  --color-ring: var(--color-accent-ink);
+}
+
+@layer components {
+  .bg-surface {
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Buttons that use the btn background also lift off the page in light mode */
+  .bg-btn {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .bg-accent {
+    box-shadow: inset 0 0 0 1px var(--color-accent-edge);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes pop {
+  40% {
+    transform: scale(1.25);
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+/* Focus that scrolls into view must clear the bottom bar (and the top edge) */
+html {
+  scroll-padding-block: 1rem 9rem;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+/*
+  The focus ring lives in the base layer, so a utility like outline-none can still override it. (Unlayered
+  CSS beats every layer: that is how <main>, which is focused after each navigation, once drew a lime
+  line along the bottom of the page.)
+*/
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+
+  /* The ring colour has to stand out from the surface it sits on */
+  [data-surface="accent"] :focus-visible,
+  [data-surface="accent"]:focus-visible {
+    outline-color: var(--color-accent-ink);
+  }
+
+}
+
+/* A card whose title link stretches over it shows the focus ring around the whole card */
+.card-link:has(a:focus-visible) {
+  outline: 3px solid var(--color-ring);
+  outline-offset: 3px;
+}
+
+/* A modal dialog keeps the page behind it still */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+/* No scrollbars anywhere (page, dialogs, the swipe rows). Wheel, touch, keys and drag still scroll. */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* The tick pops when a task flips to done */
+[data-done="true"] .check-icon {
+  animation: var(--animate-pop);
+}
+
+input[type="date"],
+input[type="time"] {
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
